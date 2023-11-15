@@ -1,2 +1,2 @@
 # chipchip8
-Another CHIP-8 emulator in Rust
+Just another CHIP-8 emulator that I'm writing to teach myself Rust
