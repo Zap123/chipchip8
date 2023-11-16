@@ -121,9 +121,9 @@ impl Chip8 {
                         println!("");
                     }
                     if self.graphics_unit[i] == 0 {
-                        print!(".");
+                        print!("⣿");
                     } else {
-                        print!("❤️");
+                        print!(" ");
                     }
                 }
 
@@ -138,9 +138,9 @@ impl Chip8 {
             0x1000 => {
                 // 1nnn - JP addr: Jump to location nnn.
                 // check infinite loop
-                if self.cpu_unit.pc == (opcode & 0x0FFF) {
-                    panic!("Infinite loop detected");
-                }
+                //if self.cpu_unit.pc == (opcode & 0x0FFF) {
+                //    panic!("Infinite loop detected");
+                //}
                 self.cpu_unit.pc = opcode & 0x0FFF;
             }
             _ => panic!("Instruction {firstnib:x} not implemented"),
