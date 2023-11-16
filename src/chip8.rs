@@ -1,7 +1,11 @@
 use core::panic;
 use std::fs::File;
 use std::io::Read;
+use log::{debug, error, info, warn};
+
+use sdl2::EventPump;
 mod cpu_unit;
+mod graphics_unit;
 mod memory_unit;
 
 const CHIP8_FONTSET: [u8; 80] = [
@@ -28,13 +32,16 @@ pub struct Chip8 {
     memory_unit: memory_unit::MemoryUnit,
     // CPU emulator
     cpu_unit: cpu_unit::CpuUnit,
-    graphics_unit: [u8; 64 * 32], // amount of pixels
+    graphics_unit: graphics_unit::GraphicsUnit, 
+    pub input_unit: EventPump,
 }
 
 impl Chip8 {
     pub fn new() -> Chip8 {
         let mut memory = memory_unit::MemoryUnit::new();
         let cpu = cpu_unit::CpuUnit::new();
+        let gpu = graphics_unit::GraphicsUnit::new();
+        let input = gpu.driver.event_pump().unwrap();
 
         // load font set
         for i in 1..80 {
@@ -44,7 +51,8 @@ impl Chip8 {
         Chip8 {
             memory_unit: memory,
             cpu_unit: cpu,
-            graphics_unit: [0_u8; 64 * 32],
+            graphics_unit: gpu,
+            input_unit: input,
         }
     }
 
@@ -57,12 +65,12 @@ impl Chip8 {
         let firstnib = opcode & 0xF000;
         // Execute Opcode
         //instructions::InstructionSet::new(self);
-        println!("Executing {opcode:x} - {firstnib:x}");
+        info!("Executing {opcode:x} - {firstnib:x}");
         match firstnib {
             0x0000 => match opcode & 0x000F {
                 0x0000 => {
                     // CLS:  Clear the display.
-                    self.graphics_unit.fill(0);
+                    self.graphics_unit.screen.fill(0);
                     self.cpu_unit.pc += 2;
                 }
                 _ => panic!("Instruction {firstnib:x} not implemented"),
@@ -89,7 +97,7 @@ impl Chip8 {
                 // set x,y from registers
                 let x = self.cpu_unit.v[((opcode & 0x0F00) >> 8) as usize] & 63; // wrap around as per specification
                 let y = self.cpu_unit.v[((opcode & 0x00F0) >> 4) as usize] & 31;
-                println!("Drawing at x: {x} y: {y}", x = x, y = y);
+                debug!("Drawing at x: {x} y: {y}", x = x, y = y);
 
                 let height: u16 = opcode & 0x000F;
                 // reset VF collision flag
@@ -108,22 +116,24 @@ impl Chip8 {
                             if pos >= 64 * 32 {
                                 continue;
                             }
-                            if self.graphics_unit[pos as usize] == 1 {
+                            if self.graphics_unit.screen[pos as usize] == 1 {
                                 self.cpu_unit.v[0xF] = 1;
                             }
-                            self.graphics_unit[pos as usize] ^= 1;
+                            self.graphics_unit.screen[pos as usize] ^= 1;
                         }
                     }
                 }
 
-                for i in 0..64 * 32 {
+                self.graphics_unit.draw();
+                // debug display 
+                for i in 0..self.graphics_unit.screen.len() {
                     if i % 64 == 0 {
-                        println!("");
+                        debug!("");
                     }
-                    if self.graphics_unit[i] == 0 {
-                        print!("⣿");
+                    if self.graphics_unit.screen[i] == 0 {
+                        debug!("⣿");
                     } else {
-                        print!(" ");
+                        debug!(" ");
                     }
                 }
 
