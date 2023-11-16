@@ -13,16 +13,15 @@ impl<'a> GraphicsUnit {
     pub fn new() -> Self {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-
         let window = video_subsystem
-            .window("Chip Chip 8", 640, 320)
+            .window("🐦 Chip Chip 8", 640, 320)
             .position_centered()
             .build()
             .unwrap();
 
         let mut canvas = window.into_canvas().build().unwrap();
         canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.set_scale(10.0, 10.0);
+        canvas.set_scale(10.0, 10.0).unwrap();
         canvas.clear();
         canvas.present();
 
